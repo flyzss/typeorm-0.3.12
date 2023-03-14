@@ -251,23 +251,17 @@ export class MongoDriver implements Driver {
     connect(): Promise<void> {
         return new Promise<void>((ok, fail) => {
             const options = DriverUtils.buildMongoDBDriverOptions(this.options)
-
-            this.mongodb.MongoClient.connect(
-                this.buildConnectionUrl(options),
-                this.buildConnectionOptions(options),
-                (err: any, client: any) => {
-                    if (err) return fail(err)
-
-                    this.queryRunner = new MongoQueryRunner(
-                        this.connection,
-                        client,
-                    )
-                    ObjectUtils.assign(this.queryRunner, {
-                        manager: this.connection.manager,
-                    })
-                    ok()
-                },
-            )
+            const client=new this.mongodb.MongoClient(this.buildConnectionUrl(options));
+            try {
+                await client.connect();
+            } catch (error) {
+                return fail(error);
+            }
+            this.queryRunner = new MongoQueryRunner(this.connection, client);
+            ObjectUtils.assign(this.queryRunner, {
+                manager: this.connection.manager,
+            });
+            ok();
         })
     }
 
